@@ -1738,7 +1738,7 @@ type User {
 }
 ```
 
-If the name of the relationship on the Eloquent model is different than the field name,
+If the name of the relationship on the Eloquent model differs from the field name,
 you can override it by setting `relation`.
 
 ```graphql
@@ -1841,12 +1841,47 @@ type User {
 }
 ```
 
-If the name of the relationship on the Eloquent model is different than the field name,
+If the name of the relationship on the Eloquent model differs from the field name,
 you can override it by setting `relation`.
 
 ```graphql
 type User {
   phone: Phone @hasOne(relation: "telephone")
+}
+```
+
+## @hasOneThrough
+
+```graphql
+"""
+Corresponds to [the Eloquent relationship HasOneThrough](https://laravel.com/docs/eloquent-relationships#has-one-through).
+"""
+directive @hasOneThrough(
+  """
+  Specify the relationship method name in the model class,
+  if it is named different from the field in the schema.
+  """
+  relation: String
+
+  """
+  Apply scopes to the underlying query.
+  """
+  scopes: [String!]
+) on FIELD_DEFINITION
+```
+
+```graphql
+type Mechanic {
+  carOwner: Owner! @hasOneThrough
+}
+```
+
+If the name of the relationship on the Eloquent model differs from the field name,
+you can override it by setting `relation`.
+
+```graphql
+type Mechanic {
+  carOwner: Owner! @hasOneThrough(relation: "owner")
 }
 ```
 
@@ -4315,3 +4350,45 @@ type User {
 ```
 
 If you just want to return the count itself as-is, use [@count](#count).
+
+## @withoutGlobalScopes
+
+```graphql
+"""
+Omit any number of global scopes from the query builder.
+
+This directive should be used on arguments of type `Boolean`.
+The scopes will be removed only if `true` is passed by the client.
+"""
+directive @withoutGlobalScopes(
+  """
+  The names of the global scopes to omit.
+  """
+  names: [String!]!
+) on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
+```
+
+> This directive only works if the field resolver passes its builder through a call to `$resolveInfo->enhanceBuilder()`.
+> Built-in field resolver directives that query the database do this, such as [@all](#all) or [@hasMany](#hasmany).
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+
+final class Post extends Model
+{
+    protected static function booted(): void
+    {
+        self::addGlobalScope('scheduled', fn (Builder $query): Builder => $query
+            ->whereNotNull('schedule_at'));
+    }
+}
+```
+
+```graphql
+type Query {
+  posts(
+    includeUnscheduled: Boolean @withoutGlobalScopes(names: ["scheduled"])
+  ): [Post!]! @all
+}
+```

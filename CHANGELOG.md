@@ -9,6 +9,36 @@ You can find and compare releases at the [GitHub release page](https://github.co
 
 ## Unreleased
 
+## v6.42.2
+
+### Fixed
+
+- Restore correct function of nested `HasMany` and `MorphOne` mutations https://github.com/nuwave/lighthouse/pull/2591
+
+## v6.42.1
+
+### Changed
+
+- Improve validation message when using output types as inputs https://github.com/nuwave/lighthouse/pull/2594
+
+## v6.42.0
+
+### Added
+
+- Add `@hasOneThrough` directive https://github.com/nuwave/lighthouse/pull/2585
+
+## v6.41.1
+
+### Fixed
+
+- Handle errors thrown in lifecycle events per operation https://github.com/nuwave/lighthouse/pull/2584
+
+## v6.41.0
+
+### Added
+
+- Add `@withoutGlobalScopes` directive https://github.com/nuwave/lighthouse/pull/2577
+
 ## v6.40.0
 
 ### Added
@@ -2255,7 +2285,7 @@ You can find and compare releases at the [GitHub release page](https://github.co
   with the latest changes in the base configuration file https://github.com/nuwave/lighthouse/pull/820
 - Move `SubscriptionExceptionHandler` into namespace `Nuwave\Lighthouse\Subscriptions\Contracts` https://github.com/nuwave/lighthouse/pull/819
 - The pagination field argument that controls the amount of results
-  now default tos `first` instead of `count`. The config `pagination_amount_argument`
+  now defaults to `first` instead of `count`. The config `pagination_amount_argument`
   can be used to change the argument name https://github.com/nuwave/lighthouse/pull/852
 - Rename `ArgValidationDirective` to `ProvidesRules` and drop `get` prefix from the methods within https://github.com/nuwave/lighthouse/pull/846
 - Make the argument used for finding a model to check `@can` against configurable.

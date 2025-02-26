@@ -293,12 +293,12 @@ GRAPHQL
         assert($queryType instanceof ObjectTypeDefinitionNode);
 
         $fieldType = $queryType->fields[0];
-        assert($fieldType instanceof FieldDefinitionNode);
+        assert($fieldType instanceof FieldDefinitionNode); // @phpstan-ignore instanceof.alwaysTrue (aids IDE)
 
         $typeType = $fieldType->type;
         assert($typeType instanceof NamedTypeNode);
 
-        $this->assertSame($typeType->name->value, 'Int');
+        $this->assertSame('Int', $typeType->name->value);
     }
 
     public function testDynamicallyAddedArgManipulatorDirective(): void
@@ -355,15 +355,15 @@ GRAPHQL
         assert($queryType instanceof ObjectTypeDefinitionNode);
 
         $fieldType = $queryType->fields[0];
-        assert($fieldType instanceof FieldDefinitionNode);
+        assert($fieldType instanceof FieldDefinitionNode); // @phpstan-ignore instanceof.alwaysTrue (aids IDE)
 
         $argumentType = $fieldType->arguments[0];
-        assert($argumentType instanceof InputValueDefinitionNode);
+        assert($argumentType instanceof InputValueDefinitionNode); // @phpstan-ignore instanceof.alwaysTrue (aids IDE)
 
         $typeType = $argumentType->type;
         assert($typeType instanceof NamedTypeNode);
 
-        $this->assertSame($typeType->name->value, 'Int');
+        $this->assertSame('Int', $typeType->name->value);
     }
 
     public function testDynamicallyAddedInputFieldManipulatorDirective(): void
@@ -422,11 +422,11 @@ GRAPHQL
         assert($inputType instanceof InputObjectTypeDefinitionNode);
 
         $fieldType = $inputType->fields[0];
-        assert($fieldType instanceof InputValueDefinitionNode);
+        assert($fieldType instanceof InputValueDefinitionNode); // @phpstan-ignore instanceof.alwaysTrue (aids IDE)
 
         $typeType = $fieldType->type;
         assert($typeType instanceof NamedTypeNode);
 
-        $this->assertSame($typeType->name->value, 'Int');
+        $this->assertSame('Int', $typeType->name->value);
     }
 }

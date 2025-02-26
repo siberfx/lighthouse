@@ -9,6 +9,90 @@ You can find and compare releases at the [GitHub release page](https://github.co
 
 ## Unreleased
 
+## v6.50.0
+
+### Added
+
+- Allow `thecodingmachine/safe` 3 https://github.com/nuwave/lighthouse/pull/2657
+
+## v6.49.1
+
+### Fixed
+
+- Pull empty IDs instead of filling them with upsert https://github.com/nuwave/lighthouse/pull/2656
+
+## v6.49.0
+
+### Added
+
+- Make reporting of client-safe errors configurable https://github.com/nuwave/lighthouse/issues/2647
+
+## v6.48.0
+
+### Added
+
+- Add `@bind` directive as a GraphQL analogue for Laravel's Route Model Binding https://github.com/nuwave/lighthouse/pull/2645
+
+## v6.47.1
+
+### Fixed
+
+- Cast model count to `int` in `CountModelsLoader` https://github.com/nuwave/lighthouse/pull/2646
+
+## v6.47.0
+
+### Added
+
+- Support Laravel Reverb as a subscriptions broadcasting driver https://github.com/nuwave/lighthouse/pull/2639
+
+## v6.46.0
+
+### Added
+
+- Allow `@show`, `@hide`, and `@feature` directives to be used on types, arguments and input types https://github.com/nuwave/lighthouse/pull/2638
+
+## v6.45.1
+
+### Fixed
+
+- Fix field middleware directive stub https://github.com/nuwave/lighthouse/commit/21edcfe4762b4b6f14134e8b5c636662f97443ff
+
+## v6.45.0
+
+### Added
+
+- Cache query validation results https://github.com/nuwave/lighthouse/pull/2603
+
+## v6.44.2
+
+### Fixed
+
+- Apply `@convertEmptyStringsToNull` to input fields when used upon fields https://github.com/nuwave/lighthouse/issues/2610
+
+## v6.44.1
+
+### Fixed
+
+- Ensure `deprecationReason` is set on arguments and input fields https://github.com/nuwave/lighthouse/pull/2609
+
+## v6.44.0
+
+### Added
+
+- Allow `@deprecated` directive on arguments and input fields https://github.com/nuwave/lighthouse/pull/2607
+
+## v6.43.1
+
+### Changed
+
+- Improve formatting of `_lighthouse_ide_helper.php` https://github.com/nuwave/lighthouse/pull/2604
+
+## v6.43.0
+
+### Added
+
+- Remove expired members from subscription topic stored in Redis set map https://github.com/nuwave/lighthouse/pull/2601
+
 ## v6.42.2
 
 ### Fixed

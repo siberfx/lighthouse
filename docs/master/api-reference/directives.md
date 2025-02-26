@@ -460,6 +460,157 @@ type RoleEdge {
 }
 ```
 
+## @bind
+
+```graphql
+"""
+Replace argument values with the corresponding model (or some other value) before passing them to the resolver.
+For example, instead of injecting a user's ID, you can inject the entire User model instance that matches the given ID.
+This eliminates the need to manually query for the instance inside the resolver.
+
+This works analogues to [Laravel's Route Model Binding](https://laravel.com/docs/routing#route-model-binding).
+"""
+directive @bind(
+  """
+  Specify the fully qualified class name of the binding to use.
+  This can be either an Eloquent model, or a class that defines a method `__invoke` that resolves the value.
+  """
+  class: String!
+
+  """
+  Specify the column name of a unique identifier to use when binding Eloquent models.
+  By default, "id" is used as the primary key column.
+  """
+  column: String! = "id"
+
+  """
+  Specify the relations to eager-load when binding Eloquent models.
+  """
+  with: [String!]! = []
+
+  """
+  Specify whether the binding should be considered required.
+  When set to `true`, a validation error will be thrown if the value (or any of the list values) can not be resolved.
+  The field resolver will not be invoked in this case.
+  When set to `false`, argument values that can not be resolved will be passed to the resolver as `null`.
+  When the argument is a list, individual values that can not be resolved will be filtered out.
+  """
+  required: Boolean! = true
+) on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
+```
+
+### Basic usage
+
+```graphql
+type Mutation {
+  addUserToCompany(
+    user: ID! @bind(class: "App\\Models\\User")
+    company: ID! @bind(class: "App\\Models\\Company")
+  ): Boolean!
+}
+```
+
+```php
+namespace App\GraphQL\Mutations;
+
+final class AddUserToCompany
+{
+    /**
+     * @param array{
+     *   user: \App\Models\User,
+     *   company: \App\Models\Company,
+     * } $args
+     */
+    public function __invoke(mixed $root, array $args): bool
+    {
+        $user = $args['user'];
+        $user->associate($args['company']);
+
+        return $user->save();
+    }
+}
+```
+
+### Binding instances that are not Eloquent models
+
+To bind instances that are not Eloquent models, callable classes can be used instead:
+
+```graphql
+type Mutation {
+  updateCompanyInfo(
+    company: ID! @bind(class: "App\\Http\\GraphQL\\Bindings\\CompanyBinding")
+  ): Boolean!
+}
+```
+
+```php
+namespace App\GraphQL\Bindings;
+
+use App\External\Company;
+use App\External\CompanyRepository;
+use Nuwave\Lighthouse\Bind\BindDefinition;
+
+final class CompanyBinding
+{
+    public function __construct(
+        private CompanyRepository $companyRepository,
+    ) {}
+
+    public function __invoke(string $value, BindDefinition $definition): ?Company
+    {
+        if ($definition->required) {
+            return $this->companyRepository->findOrFail($value);
+        }
+
+        return $this->companyRepository->find($value);
+    }
+}
+```
+
+### Binding a collection of instances
+
+When the `@bind` directive is defined on an argument or input field with an array value,
+it can be used to resolve a collection of instances.
+
+```graphql
+type Mutation {
+  addUsersToCompany(
+    users: [ID!]! @bind(class: "App\\Models\\User")
+    company: ID! @bind(class: "App\\Models\\Company")
+  ): [User!]!
+}
+```
+
+```php
+namespace App\GraphQL\Mutations;
+
+use App\Models\User;
+
+final class AddUsersToCompany
+{
+    /**
+     * @param array{
+     *     users: \Illuminate\Database\Eloquent\Collection<int, \App\Models\User>,
+     *     company: \App\Models\Company,
+     * } $args
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\User>
+     */
+    public function __invoke(mixed $root, array $args): Collection
+    {
+        return $args['users']
+            ->map(function (User $user) use ($args): ?User {
+                $user->associate($args['company']);
+
+                return $user->save()
+                    ? $user
+                    : null;
+            })
+            ->filter();
+    }
+}
+```
+
 ## @broadcast
 
 ```graphql
@@ -747,7 +898,7 @@ directive @canFind(
 ) repeatable on FIELD_DEFINITION
 ```
 
-### canRoot
+### @canModel
 
 ```graphql
 """
@@ -755,7 +906,7 @@ Check a Laravel Policy to ensure the current user is authorized to access a fiel
 
 Check the policy against the root model.
 """
-directive @canRoot(
+directive @canModel(
   """
   The model name to check against.
   """
@@ -896,7 +1047,10 @@ final class ComplexityAnalyzer
 
 ```graphql
 """
-Replaces `""` with `null`.
+Replaces incoming empty strings `""` with `null`.
+
+When used upon fields, empty strings for non-nullable inputs will pass unchanged.
+Only explicitly placing this on non-nullable inputs will force the conversion.
 """
 directive @convertEmptyStringsToNull on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 ```
@@ -1165,17 +1319,16 @@ Marks an element of a GraphQL schema as no longer supported.
 """
 directive @deprecated(
   """
-  Explains why this element was deprecated, usually also including a
-  suggestion for how to access supported similar data.
-  Formatted in [Markdown](https://commonmark.org).
+  Explains why this element was deprecated.
+  It is also beneficial to suggest what to use instead.
+  Formatted in Markdown, as specified by [CommonMark](https://commonmark.org).
   """
   reason: String = "No longer supported"
-) on FIELD_DEFINITION | ENUM_VALUE
+) on FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | ENUM_VALUE
 ```
 
-You can mark fields as deprecated by adding the [@deprecated](#deprecated) directive.
-It is recommended to provide a `reason` for the deprecation, as well as a suggestion on
-how to move forward.
+You can indicate schema elements are no longer supported by adding the [@deprecated](#deprecated) directive.
+It is recommended to provide a `reason` for the deprecation, as well as suggest a replacement.
 
 ```graphql
 type Query {
@@ -1245,13 +1398,8 @@ enum FeatureState {
 ```
 
 Requires the installation of [Laravel Pennant](https://laravel.com/docs/pennant)
-and manual registration of the service provider in `config/app.php`:
-
-```php
-'providers' => [
-    \Nuwave\Lighthouse\Pennant\PennantServiceProvider::class,
-],
-```
+and manual registration of the service provider `Nuwave\Lighthouse\Pennant\PennantServiceProvider`,
+see [registering providers in Laravel](https://laravel.com/docs/providers#registering-providers).
 
 ## @field
 
@@ -3421,13 +3569,8 @@ directive @search(
 ```
 
 Requires the installation of [Laravel Scout](https://laravel.com/docs/scout)
-and manual registration of the service provider in `config/app.php`:
-
-```php
-'providers' => [
-    \Nuwave\Lighthouse\Scout\ScoutServiceProvider::class,
-],
-```
+and manual registration of the service provider `Nuwave\Lighthouse\Scout\ScoutServiceProvider`,
+see [registering providers in Laravel](https://laravel.com/docs/providers#registering-providers).
 
 The `search()` method of the model is called with the value of the argument,
 using the driver you configured for Scout.
